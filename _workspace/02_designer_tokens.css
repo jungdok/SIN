@@ -1,0 +1,106 @@
+/* =========================================================
+   포트폴리오 디자인 토큰 — 02_designer_tokens.css
+   방향: "여백 넓은 흰 종이 위, 왼쪽에 항목명·오른쪽에 내용을 적은 이력 카드"
+   웹폰트: IBM Plex Sans KR (Google Fonts, 300/400/600) 1종만 사용
+   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;600&display=swap" rel="stylesheet">
+   ========================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Color (light) ---- */
+  --color-bg: #FFFFFF;              /* 순백 종이 */
+  --color-surface: #F6F7F8;         /* 이미지 플레이스홀더, 코드/태그 배경 */
+  --color-text: #1D1F23;            /* 본문 — 흰 배경 대비 약 16:1 */
+  --color-text-muted: #5F6368;      /* 보조 문구·날짜 — 약 6.3:1 */
+  --color-accent: #2A4B8D;          /* 잉크 블루 — 링크·버튼·포커스, 약 8.6:1 */
+  --color-accent-contrast: #FFFFFF; /* 액센트 위 글자 */
+  --color-accent-soft: #EEF2F9;     /* 버튼 호버 배경(보조 버튼) */
+  --color-border: #E4E6EA;          /* 섹션 구분 헤어라인 */
+  --color-focus: #2A4B8D;
+
+  /* ---- Font ---- */
+  --font-display: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace; /* 웹폰트 아님, 코드 조각에만 */
+
+  --weight-light: 300;   /* hero 이름 */
+  --weight-regular: 400; /* 본문 */
+  --weight-bold: 600;    /* 제목·프로젝트명 */
+
+  /* ---- Type scale (모바일 → 데스크톱, 비율 약 1.25) ---- */
+  --text-sm: 0.875rem;                                  /* 14px — 날짜·태그·footer */
+  --text-base: 1.0625rem;                               /* 17px — 한글 본문 */
+  --text-lg: clamp(1.1875rem, 1.1rem + 0.4vw, 1.375rem);  /* 19→22px — 프로젝트명·about 리드 */
+  --text-xl: clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem);    /* 22→28px — 섹션 제목 */
+  --text-display: clamp(2.75rem, 1.6rem + 5vw, 5.5rem);   /* 44→88px — hero 이름 */
+
+  --leading-tight: 1.2;
+  --leading-body: 1.75;   /* 한글 본문은 넉넉하게 */
+  --tracking-display: -0.02em;
+  --measure: 36em;        /* 본문 최대 줄 길이(한글 약 36~40자) */
+
+  /* ---- Space (4px 기반) ---- */
+  --space-1: 0.25rem;  /*  4px */
+  --space-2: 0.5rem;   /*  8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px — 모바일 좌우 여백 */
+  --space-5: 1.5rem;   /* 24px */
+  --space-6: 2.5rem;   /* 40px — 데스크톱 좌우 여백 */
+  --space-7: 4rem;     /* 64px — 섹션 간 (모바일) */
+  --space-8: 7.5rem;   /* 120px — 섹션 간 (데스크톱) */
+
+  /* ---- Shape ---- */
+  --radius-sm: 4px;    /* 버튼·태그 */
+  --radius-md: 8px;    /* 프로젝트 이미지 */
+  --shadow-card: none; /* 미니멀: 그림자 대신 헤어라인. 필요 시 아래 값만 사용 */
+  --shadow-focus: 0 0 0 3px var(--color-accent-soft);
+
+  /* ---- Layout ---- */
+  --max-width: 68rem;       /* 1088px */
+  --label-col: 11rem;       /* 데스크톱 왼쪽 항목명 열 */
+  --header-height: 3.5rem;
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 150ms;
+  --duration-slow: 600ms;
+}
+
+/* ---- Dark mode: 시스템 설정 ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #17191C;
+    --color-surface: #202328;
+    --color-text: #E6E7E9;          /* 약 14:1 */
+    --color-text-muted: #9CA1A8;    /* 약 6.6:1 */
+    --color-accent: #93B1EA;        /* 약 8.4:1 */
+    --color-accent-contrast: #0F1B33;
+    --color-accent-soft: #1F2A3D;
+    --color-border: #2C3036;
+    --color-focus: #93B1EA;
+  }
+}
+
+/* ---- Dark mode: 수동 토글 ---- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #17191C;
+  --color-surface: #202328;
+  --color-text: #E6E7E9;
+  --color-text-muted: #9CA1A8;
+  --color-accent: #93B1EA;
+  --color-accent-contrast: #0F1B33;
+  --color-accent-soft: #1F2A3D;
+  --color-border: #2C3036;
+  --color-focus: #93B1EA;
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-slow: 0ms;
+  }
+}
