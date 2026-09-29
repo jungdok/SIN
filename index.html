@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YUHA OS</title>
+<meta name="description" content="유하의 포트폴리오 — 머릿속 본부 콘솔. 강원대 관광학과, 농구·기타·즉흥 여행.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Nanum+Gothic+Coding:wght@400;700&family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ── 토큰 ─────────────────────────────────────────── */
+:root{
+  --font-mono:"IBM Plex Mono","Nanum Gothic Coding",ui-monospace,Consolas,monospace;
+  --font-serif:"Noto Serif KR",Georgia,"Times New Roman",serif;
+
+  --bg:#f3e7cf; --bg-deep:#d9c094;
+  --win:#fffaf0; --titlebar:#ecdcb8;
+  --chrome:#1c120a; --chrome-text:#ffd9a0;
+  --ink:#241a10; --mute:#6b5a45; --line:#5a3a18;
+  --accent:#c43f20; --on-accent:#ffffff;
+  --scan:rgba(90,58,24,.045);
+
+  /* 감정 색 — 핀 배지·자리표시 타일에만 */
+  --joy:#f2b705; --passion:#e04f2e; --curiosity:#3f7cc4;
+  --calm:#4d8a66; --impulse:#c2185b; --sentiment:#7e57c2;
+
+  --shadow-hard:3px 3px 0 var(--line);
+  --shadow-win:4px 4px 0 var(--line),0 16px 50px rgba(90,58,24,.28);
+}
+:root[data-wall="joy"]{--bg:#fbe7a8;--bg-deep:#e9bf45}
+:root[data-wall="calm"]{--bg:#dfe9d8;--bg-deep:#a7c19a}
+:root[data-wall="curiosity"]{--bg:#dde6f3;--bg-deep:#9fb6d8}
+:root[data-theme="dark"]{
+  --bg:#1d1611; --bg-deep:#0b0806;
+  --win:#241b14; --titlebar:#33261b;
+  --chrome:#000000; --chrome-text:#ffcf80;
+  --ink:#f3e7cf; --mute:#bba88c; --line:#c9a36a;
+  --accent:#ff7a55; --on-accent:#1c120a;
+  --scan:rgba(255,207,128,.03);
+  --shadow-win:4px 4px 0 var(--line),0 16px 50px rgba(0,0,0,.5);
+}
+:root[data-theme="dark"][data-wall="joy"]{--bg:#2a2208;--bg-deep:#0e0b02}
+:root[data-theme="dark"][data-wall="calm"]{--bg:#142018;--bg-deep:#060b07}
+:root[data-theme="dark"][data-wall="curiosity"]{--bg:#121a26;--bg-deep:#05080d}
+
+/* ── 기본 ─────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{font:14px/1.7 var(--font-mono);color:var(--ink);background:var(--bg-deep);overflow:hidden}
+h1,h2,h3,p{margin:0}
+a{color:var(--accent)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+::selection{background:var(--accent);color:var(--on-accent)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* 버튼 공통: 딱딱한 그림자, 누르면 눌림 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 14px;
+  background:var(--win);color:var(--ink);border:1.5px solid var(--line);box-shadow:var(--shadow-hard);
+  font-size:12px;font-weight:700;letter-spacing:.12em;text-decoration:none}
+.btn:hover{background:var(--titlebar)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--line)}
+.btn.primary{background:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+
+.kicker{font-size:11px;letter-spacing:.18em;color:var(--mute);text-transform:uppercase}
+.serif{font-family:var(--font-serif);font-weight:400;letter-spacing:-.01em}
+hr.rule{border:0;border-top:1px dashed var(--line);opacity:.5;margin:18px 0}
+
+/* ── 부팅 화면 ────────────────────────────────────── */
+#boot{position:fixed;inset:0;z-index:5000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+  padding:24px 16px;background:radial-gradient(ellipse at center,var(--bg) 0%,var(--bg-deep) 100%);cursor:pointer;text-align:center}
+#boot[hidden]{display:none}
+.boot-mark{font-family:var(--font-serif);font-size:clamp(44px,11vw,104px);line-height:1;letter-spacing:-.02em}
+.boot-mark small{display:block;margin-top:14px;font:700 12px/1.4 var(--font-mono);letter-spacing:.3em;color:var(--mute)}
+.boot-log{width:min(420px,100%);min-height:9.5em;padding:14px 16px;text-align:left;font-size:12px;line-height:1.6;
+  background:var(--win);border:1.5px solid var(--line);box-shadow:var(--shadow-hard)}
+.boot-log span{display:block}
+.boot-log .ok{color:var(--calm)}
+:root[data-theme="dark"] .boot-log .ok{color:#8fd1a8}
+.boot-enter{font-weight:700;letter-spacing:.2em;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:.35}}
+
+/* ── 데스크톱 ─────────────────────────────────────── */
+#desktop{position:fixed;inset:0;background:radial-gradient(ellipse at 60% 40%,var(--bg) 0%,var(--bg-deep) 110%)}
+#desktop::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:4000;
+  background:repeating-linear-gradient(0deg,transparent 0 3px,var(--scan) 3px 4px)}
+
+.menubar{position:absolute;top:0;left:0;right:0;height:32px;z-index:3000;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:0 12px;background:var(--chrome);color:var(--chrome-text);font-size:12px;letter-spacing:.06em}
+.menubar .left,.menubar .right{display:flex;align-items:center;gap:14px;min-width:0}
+.menubar b{white-space:nowrap}
+.menubar .mb-btn{background:none;border:0;color:inherit;padding:4px 2px;opacity:.8}
+.menubar .mb-btn:hover{opacity:1;text-decoration:underline}
+.menubar .power{border:1px solid var(--chrome-text);padding:3px 10px;letter-spacing:.14em;opacity:1}
+.menubar .power:hover{background:var(--chrome-text);color:var(--chrome);text-decoration:none}
+#clock{white-space:nowrap;font-variant-numeric:tabular-nums}
+
+.icons{position:absolute;top:56px;left:24px;display:grid;grid-auto-flow:row;gap:14px;z-index:10}
+.icon{display:flex;flex-direction:column;align-items:center;gap:6px;width:84px;padding:6px 4px;background:none;border:0;border-radius:4px}
+.icon:hover,.icon:focus-visible{background:rgba(90,58,24,.12)}
+.icon .glyph{display:grid;place-items:center;width:48px;height:40px;font-size:20px;background:var(--win);
+  border:1.5px solid var(--line);box-shadow:2px 2px 0 var(--line)}
+.icon .name{font-size:11px;line-height:1.3;text-align:center;word-break:keep-all;
+  background:color-mix(in srgb,var(--bg) 70%,transparent);padding:0 3px}
+
+.hero-btn{position:absolute;top:56px;right:32px;z-index:10;width:104px;height:104px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:8px;background:var(--win);border:1.5px solid var(--line);box-shadow:var(--shadow-hard);font-size:10px;font-weight:700;letter-spacing:.14em}
+.hero-btn span:first-child{font-size:36px;line-height:1}
+.hero-btn:hover{background:var(--accent);color:var(--on-accent)}
+
+.desk-note{position:absolute;right:32px;bottom:92px;z-index:5;max-width:300px;text-align:right;font-size:11px;color:var(--mute);letter-spacing:.06em}
+.desk-note .serif{display:block;font-size:22px;line-height:1.3;color:var(--ink);margin-bottom:6px}
+
+.dock{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;align-items:center;gap:6px;height:52px;padding:0 10px;
+  background:var(--win);border:1.5px solid var(--line);box-shadow:var(--shadow-hard);max-width:calc(100vw - 32px);overflow-x:auto}
+.dock button{position:relative;width:40px;height:36px;flex:none;font-size:17px;background:transparent;border:1px solid var(--line);color:var(--ink)}
+.dock button:hover{background:var(--titlebar)}
+.dock button.open{background:var(--accent);color:var(--on-accent)}
+.dock .sep{width:1px;height:28px;background:var(--line);opacity:.4;flex:none}
+
+/* ── 창 ───────────────────────────────────────────── */
+.win{position:absolute;display:flex;flex-direction:column;min-width:280px;background:var(--win);color:var(--ink);
+  border:1.5px solid var(--line);box-shadow:var(--shadow-win)}
+.win.enter{animation:pop .16s ease-out}
+@keyframes pop{from{transform:scale(.96);opacity:0}}
+.titlebar{flex:none;display:flex;align-items:center;gap:10px;height:32px;padding:0 6px 0 10px;background:var(--titlebar);
+  border-bottom:1.5px solid var(--line);cursor:grab;user-select:none;touch-action:none}
+.titlebar:active{cursor:grabbing}
+.titlebar .stripes{flex:1;height:10px;background:repeating-linear-gradient(0deg,var(--line) 0 1px,transparent 1px 3px);opacity:.35}
+.titlebar .t{font-size:12px;font-weight:700;letter-spacing:.08em;white-space:nowrap}
+.titlebar .x{width:24px;height:22px;display:grid;place-items:center;background:var(--win);border:1px solid var(--line);font-size:14px;line-height:1}
+.titlebar .x:hover{background:var(--accent);color:var(--on-accent)}
+.win.focused .titlebar{background:color-mix(in srgb,var(--accent) 22%,var(--titlebar))}
+.win-body{flex:1;overflow:auto;padding:22px 24px 26px;overscroll-behavior:contain}
+.statusbar{flex:none;display:flex;justify-content:space-between;gap:10px;padding:4px 10px;border-top:1px solid var(--line);font-size:10px;letter-spacing:.12em;color:var(--mute)}
+
+/* ── 앱: 소개 ─────────────────────────────────────── */
+.about{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:22px;align-items:start}
+.about h1{font-size:clamp(28px,4vw,38px);line-height:1.2;margin:10px 0 14px}
+.photo{position:relative;aspect-ratio:4/5;border:1.5px solid var(--line);box-shadow:var(--shadow-hard);overflow:hidden;
+  background:repeating-linear-gradient(135deg,var(--titlebar) 0 8px,var(--win) 8px 16px);display:grid;place-items:center;text-align:center;
+  font-size:10px;letter-spacing:.08em;color:var(--mute);padding:8px}
+.photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.staff{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;font-size:12px}
+.cols h3{font-size:11px;letter-spacing:.16em;color:var(--mute);margin-bottom:6px;font-weight:700}
+.cols ul{list-style:none;margin:0;padding:0}
+.cols li{padding:2px 0}
+
+/* ── 앱: 핀보드 ───────────────────────────────────── */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 18px}
+.chip{min-height:32px;padding:4px 10px;font-size:11px;font-weight:700;letter-spacing:.06em;background:var(--win);border:1.5px solid var(--line);box-shadow:2px 2px 0 var(--line)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--win)}
+.chip i{display:inline-block;width:8px;height:8px;margin-right:6px;border:1px solid var(--line);vertical-align:0}
+.board{columns:3 170px;column-gap:12px}
+.pin{display:block;width:100%;margin:0 0 12px;break-inside:avoid;padding:0;text-align:left;background:var(--win);border:1.5px solid var(--line);box-shadow:var(--shadow-hard)}
+.pin:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--line)}
+.pin:hover .pin-title{text-decoration:underline}
+.tile{position:relative;display:grid;place-items:center;overflow:hidden;border-bottom:1.5px solid var(--line);
+  background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--c) 30%,var(--win)) 0 10px,color-mix(in srgb,var(--c) 18%,var(--win)) 10px 20px)}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tile .ph{padding:8px;font-size:10px;letter-spacing:.06em;color:var(--mute);text-align:center}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:.08em;
+  background:var(--win);border:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.badge i{width:8px;height:8px;background:var(--c);border:1px solid var(--line)}
+.tile .badge{position:absolute;top:8px;left:8px}
+.pin-meta{padding:10px 12px 12px}
+.pin-title{font-weight:700;font-size:13px;line-height:1.45}
+.pin-kind{font-size:10px;color:var(--mute);letter-spacing:.1em;margin-top:2px}
+.detail .tile{max-height:320px;border:1.5px solid var(--line);box-shadow:var(--shadow-hard);margin:16px 0 18px}
+.detail h2{font-size:28px;line-height:1.25;margin:10px 0 4px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;padding-top:14px;margin-top:18px;border-top:1px dashed var(--line)}
+.facts dt{font-size:10px;letter-spacing:.14em;color:var(--mute)}
+.facts dd{margin:2px 0 0;font-weight:700}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.tags span{font-size:11px;padding:1px 8px;border:1px dotted var(--line);color:var(--mute)}
+.driver{margin-top:18px;padding:10px 12px;border-left:4px solid var(--c);background:color-mix(in srgb,var(--c) 10%,var(--win));font-size:12px}
+
+/* ── 앱: 요즘 ─────────────────────────────────────── */
+.now-row{display:grid;grid-template-columns:90px minmax(0,1fr);gap:16px;padding:14px 0;border-top:1px dotted var(--line)}
+.now-row:last-child{border-bottom:1px dotted var(--line)}
+.now-row .k{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--mute);padding-top:3px}
+.now-row .v{font-family:var(--font-serif);font-size:17px;line-height:1.4}
+.now-row .n{font-size:12px;color:var(--mute);margin-top:2px}
+
+/* ── 앱: 연락 (자동응답기) ────────────────────────── */
+.machine{background:var(--chrome);color:var(--chrome-text);border:1.5px solid var(--line);box-shadow:var(--shadow-hard);padding:14px 16px;font-size:12px}
+.machine .lcd{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;margin-bottom:12px;background:#0d1a0d;color:#7aff7a;letter-spacing:.14em;font-size:11px}
+.machine .rec{color:#ff5a5a;animation:blink 1.2s steps(1) infinite}
+.menu-opts{display:grid;gap:8px}
+.menu-opts .btn{justify-content:space-between;background:transparent;color:var(--chrome-text);border-color:var(--chrome-text);box-shadow:2px 2px 0 var(--chrome-text);letter-spacing:.06em;font-weight:500;text-align:left}
+.menu-opts .btn:hover{background:var(--chrome-text);color:var(--chrome)}
+.menu-opts kbd{font:700 11px var(--font-mono);padding:1px 6px;border:1px solid currentColor}
+.form{display:grid;gap:12px;margin-top:4px}
+.form label{display:grid;gap:4px;font-size:11px;letter-spacing:.12em;font-weight:700}
+.form input,.form textarea{font:14px/1.5 var(--font-mono);color:var(--ink);background:var(--win);border:1.5px solid var(--line);padding:9px 10px;min-height:44px}
+.form textarea{min-height:110px;resize:vertical}
+.form .err{color:var(--accent);font-size:12px;min-height:1.4em}
+
+/* ── 앱: 3점슛 ────────────────────────────────────── */
+.court{text-align:center}
+.scoreboard{display:flex;justify-content:center;gap:10px;margin:14px 0}
+.scoreboard div{min-width:84px;padding:8px 10px;background:var(--chrome);color:#ffb347;border:1.5px solid var(--line)}
+.scoreboard b{display:block;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.scoreboard small{font-size:9px;letter-spacing:.16em;color:var(--chrome-text)}
+.meter{position:relative;height:34px;margin:18px 4px 8px;background:var(--titlebar);border:1.5px solid var(--line);box-shadow:var(--shadow-hard);overflow:hidden}
+.meter .zone{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--calm) 55%,transparent);border-inline:1.5px solid var(--line)}
+.meter .needle{position:absolute;top:-2px;bottom:-2px;width:4px;margin-left:-2px;background:var(--accent)}
+.hoop-msg{min-height:3.2em;margin:10px 0 14px;font-family:var(--font-serif);font-size:18px}
+.court .hint{font-size:11px;color:var(--mute);letter-spacing:.08em;margin-top:10px}
+
+/* ── 앱: 설정 ─────────────────────────────────────── */
+.walls{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin:12px 0 22px}
+.wall{padding:0;text-align:left;background:var(--win);border:1.5px solid var(--line);box-shadow:2px 2px 0 var(--line)}
+.wall[aria-pressed="true"]{outline:3px solid var(--accent);outline-offset:2px}
+.wall .sw{height:56px;border-bottom:1.5px solid var(--line)}
+.wall .lb{padding:6px 8px;font-size:11px;font-weight:700}
+.wall .ds{display:block;font-weight:400;color:var(--mute);font-size:10px}
+.seg{display:inline-flex;border:1.5px solid var(--line);box-shadow:var(--shadow-hard)}
+.seg button{min-height:40px;padding:6px 16px;border:0;background:var(--win);font-size:12px;font-weight:700;letter-spacing:.1em}
+.seg button+button{border-left:1.5px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--win)}
+
+/* ── 도움말 ───────────────────────────────────────── */
+.guide-list{list-style:none;margin:10px 0 0;padding:0}
+.guide-list li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dotted var(--line)}
+.guide-list .glyph{flex:none;display:grid;place-items:center;width:36px;height:30px;border:1.5px solid var(--line);box-shadow:2px 2px 0 var(--line)}
+.guide-list b{display:block}
+.guide-list span{font-size:12px;color:var(--mute)}
+
+/* ── 모바일: 창은 전체 화면 시트, 드래그 없음 ─────── */
+@media (max-width:760px){
+  .icons{left:16px;right:16px;top:48px;grid-template-columns:repeat(4,minmax(0,1fr));justify-items:center;gap:10px}
+  .icon{width:100%;max-width:84px}
+  .hero-btn,.desk-note{display:none}
+  .win{left:8px!important;right:8px!important;top:40px!important;bottom:76px!important;width:auto!important;height:auto!important;min-width:0}
+  .titlebar{cursor:default}
+  .win-body{padding:18px 16px 22px}
+  .about{grid-template-columns:1fr}
+  .about .photo{width:140px;order:-1}
+  .cols{grid-template-columns:1fr 1fr}
+  .menubar .hide-sm{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- 부팅 화면 -->
+<div id="boot" role="button" tabindex="0" aria-label="YUHA OS 입장하기">
+  <div class="boot-mark">YUHA OS<small>머릿속 본부 콘솔 · V.01</small></div>
+  <div class="boot-log" id="bootLog" aria-live="polite"></div>
+  <div class="boot-enter">▸ 클릭해서 입장</div>
+</div>
+
+<!-- 데스크톱 -->
+<main id="desktop" hidden>
+  <h1 class="sr-only">유하 포트폴리오 — YUHA OS</h1>
+  <div class="menubar">
+    <div class="left">
+      <b>◉ YUHA OS</b>
+      <button class="mb-btn" data-open="about">나</button>
+      <button class="mb-btn" data-open="pins">핀</button>
+      <button class="mb-btn hide-sm" data-open="now">요즘</button>
+      <button class="mb-btn" data-open="guide">도움말</button>
+    </div>
+    <div class="right">
+      <span id="clock" class="hide-sm" aria-hidden="true"></span>
+      <button class="mb-btn power" id="powerOff">전원 끄기</button>
+    </div>
+  </div>
+
+  <nav class="icons" aria-label="바탕화면 아이콘" id="icons"></nav>
+
+  <button class="hero-btn" data-open="pins" aria-label="사진첩 열기 — 감정 핀보드">
+    <span aria-hidden="true">📷</span><span>사진첩</span>
+  </button>
+
+  <p class="desk-note" aria-hidden="true">
+    <span class="serif">머릿속 본부에<br>직원이 좀 많아요</span>
+    아이콘을 눌러 창을 여세요 · 제목 줄을 끌어 옮기기
+  </p>
+
+  <div id="windows"></div>
+  <div class="dock" id="dock" role="toolbar" aria-label="독"></div>
+</main>
+
+<!-- ── 창 템플릿 ─────────────────────────────────────── -->
+<template id="tpl-about">
+  <div class="about">
+    <div>
+      <div class="kicker">유하 · Free spirit · 강원대 관광학과</div>
+      <h1 class="serif">머릿속 본부에<br>직원이 좀 많아요</h1>
+      <p>집돌이인데 한 번 나가면 안 들어옵니다. 코트에선 소리 지르고, 밤엔 기타를 잡고, 주말엔 표부터 끊습니다.</p>
+      <p style="margin-top:10px">사진첩의 핀은 각 감정이 제 하루를 맡았던 날의 기록이에요. 눌러 보면 누가 운전대를 잡았는지 나옵니다.</p>
+      <div class="staff" id="staff" aria-label="본부 직원 명단"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
+        <button class="btn primary" data-open="pins">핀 구경하기</button>
+        <button class="btn" data-open="now">요즘 뭐 하냐면 →</button>
+      </div>
+    </div>
+    <div class="photo" id="profilePhoto">프로필 사진<br>(4:5)</div>
+  </div>
+  <hr class="rule">
+  <div class="cols">
+    <div><h3>나</h3><ul><li>유하 / 자유로운 영혼</li><li>강원대 관광학과</li><li>학생회 홍보부장</li></ul></div>
+    <div><h3>자주 하는 것</h3><ul><li>농구 · 테니스</li><li>피아노 · 기타</li><li>콘솔 게임</li></ul></div>
+    <div><h3>연락</h3><ul><li><a href="#" data-open="contact">이메일</a></li><li><a href="#" data-open="contact">인스타그램</a></li><li><a href="#" data-open="contact">오픈채팅</a></li></ul></div>
+  </div>
+</template>
+
+<template id="tpl-pins">
+  <div data-view="list">
+    <h2 class="serif" style="font-size:28px;line-height:1.25">감정이 맡은 <span data-count></span>개의 핀</h2>
+    <p class="kicker" style="margin-top:6px;text-transform:none;letter-spacing:.04em">누르면 그날 운전대를 잡은 감정이 변명합니다</p>
+    <div class="chips" role="group" aria-label="감정별 거르기"></div>
+    <div class="board"></div>
+  </div>
+  <div data-view="detail" class="detail" hidden></div>
+</template>
+
+<template id="tpl-now">
+  <div class="kicker">Updated 2026.09</div>
+  <h2 class="serif" style="font-size:28px;line-height:1.25;margin:8px 0 6px">지금 듣는 것,<br>읽는 것, 하는 것</h2>
+  <p style="color:var(--mute);font-size:12px;margin-bottom:18px">이번 달 기준. 다음 달엔 아마 전부 바뀌어 있을 거예요.</p>
+  <div data-now></div>
+</template>
+
+<template id="tpl-contact">
+  <h2 class="serif" style="font-size:28px;line-height:1.25">코트, 무대, 공항 중<br>아무 데나 부르세요</h2>
+  <p style="margin:10px 0 18px;font-size:13px">농구 한 명 모자랄 때, 합주에 기타가 없을 때, 주말에 갑자기 떠나고 싶을 때. 셋 중 하나면 답장이 빠릅니다.</p>
+  <div class="machine">
+    <div class="lcd"><span>▸ YUHA-MATIC 3000</span><span class="rec">● REC</span></div>
+    <div data-screen="menu">
+      <p style="margin-bottom:10px">삐— 유하는 지금 코트에 있습니다. 번호를 누르세요.</p>
+      <div class="menu-opts" data-opts></div>
+      <p style="margin-top:12px;font-size:10px;letter-spacing:.14em;opacity:.75">▸ 키보드 1–4 로도 누를 수 있어요</p>
+    </div>
+    <div data-screen="leave" hidden>
+      <p style="margin-bottom:6px">04 · 메시지 남기기 — 삐 소리 후에 말씀하세요…</p>
+    </div>
+  </div>
+  <form class="form" data-form hidden novalidate>
+    <label>이름 *<input name="name" autocomplete="name" required></label>
+    <label>이메일 *<input name="email" type="email" autocomplete="email" required></label>
+    <label>메시지 *<textarea name="msg" required></textarea></label>
+    <div class="err" data-err role="alert"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn primary" type="submit">메일 앱으로 보내기</button>
+      <button class="btn" type="button" data-back>← 메뉴</button>
+    </div>
+  </form>
+</template>
+
+<template id="tpl-hoops">
+  <div class="court">
+    <div class="kicker">YUHA ARCADE · 3점슛.app</div>
+    <h2 class="serif" style="font-size:26px;margin-top:6px">3점 하나에 하루가 감</h2>
+    <div class="scoreboard">
+      <div><small>성공</small><b data-made>0</b></div>
+      <div><small>슛</small><b data-shots>0/10</b></div>
+      <div><small>최고</small><b data-best>0</b></div>
+    </div>
+    <div class="meter" aria-hidden="true"><div class="zone" data-zone></div><div class="needle" data-needle></div></div>
+    <p class="hoop-msg" data-msg aria-live="polite">바늘이 초록 칸에 올 때 던지세요.</p>
+    <button class="btn primary" data-shoot style="min-width:160px">▸ 시작</button>
+    <p class="hint">스페이스바 / 클릭 · 연속으로 넣을수록 칸이 좁아집니다</p>
+  </div>
+</template>
+
+<template id="tpl-settings">
+  <div class="kicker">YUHA OS · 제어판</div>
+  <h2 class="serif" style="font-size:26px;margin:6px 0 14px">설정</h2>
+  <h3 style="font-size:12px;letter-spacing:.14em">배경</h3>
+  <div class="walls" data-walls></div>
+  <h3 style="font-size:12px;letter-spacing:.14em;margin-bottom:10px">화면 모드</h3>
+  <div class="seg" role="group" aria-label="화면 모드">
+    <button data-theme-btn="light">낮 ☀</button><button data-theme-btn="dark">밤 ☾</button>
+  </div>
+  <p style="margin-top:18px;font-size:11px;color:var(--mute)">설정은 이 브라우저에만 저장됩니다.</p>
+</template>
+
+<template id="tpl-guide">
+  <div class="kicker">WELCOME TO YUHA OS · V.01</div>
+  <h2 class="serif" style="font-size:30px;margin:6px 0 10px">본부 안내서</h2>
+  <p style="font-size:13px">여기는 제 머릿속 본부의 콘솔입니다. 바탕화면 아이콘이나 아래 독을 누르면 창이 열려요. 창은 제목 줄을 끌어 옮기고, <b>×</b>나 Esc로 닫습니다.</p>
+  <ul class="guide-list" data-guide></ul>
+  <p style="margin-top:16px;font-size:11px;color:var(--mute);letter-spacing:.12em">— 안내 끝 —</p>
+</template>
+
+<script>
+/* ── 설정: 사진·연락처 ─────────────────────────────────
+   TODO: 사진은 site/images/ 에 넣고 경로를 적으세요. 비워 두면 자리표시 타일이 보입니다.
+   예) PROFILE_PHOTO = "images/profile.jpg";  PIN_PHOTOS = { p1:"images/p1.jpg" } */
+const PROFILE_PHOTO = "";
+const PIN_PHOTOS = {};
+/* TODO: 실제 연락처로 교체. 빈 값이면 "준비 중"으로 표시됩니다. */
+const CONTACT = {
+  email: "hello@example.com",
+  instagram: "",   // 예: "https://instagram.com/아이디"
+  openchat: ""     // 예: "https://open.kakao.com/o/xxxx"
+};
+
+/* ── 콘텐츠 (유하 포트폴리오 원본) ──────────────────── */
+const EMO = {
+  "기쁨 Joy":{c:"var(--joy)",g:"☀",line:"기쁨이 운전대를 잡은 날. 이유는 단순했고 결과는 좋았습니다."},
+  "열정 Passion":{c:"var(--passion)",g:"▲",line:"열정이 운전대를 잡은 날. 다음 날 조금 피곤했지만 후회는 없습니다."},
+  "호기심 Curiosity":{c:"var(--curiosity)",g:"?",line:"호기심이 운전대를 잡은 날. 일단 해 보고 나중에 생각했습니다."},
+  "고요 Calm":{c:"var(--calm)",g:"◡",line:"고요가 운전대를 잡은 날. 조용했지만 충전은 확실했습니다."},
+  "충동 Impulse":{c:"var(--impulse)",g:"⚡",line:"충동이 운전대를 잡은 날. 계획은 없었고 기억은 남았습니다."},
+  "감성 Sentiment":{c:"var(--sentiment)",g:"♪",line:"감성이 운전대를 잡은 날. 밤이 조금 길어졌습니다."}
+};
+const PINS=[
+ {id:"p1",emotion:"열정 Passion",kind:"이력",year:"2025–",ratio:"3 / 4",title:"학생회 홍보부장",
+  story:"강원대 관광학과 학생회에서 홍보를 맡고 있습니다. 포스터 마감 전날 밤이 제일 즐겁다고 말하면 다들 이상하게 보는데, 진심이에요.",
+  facts:[{k:"소속",v:"관광학과 학생회"},{k:"역할",v:"홍보부장"},{k:"주 업무",v:"포스터·SNS·행사"}],tags:["기획","디자인","학생회"],ph:"행사 포스터 / 현장 (3:4)"},
+ {id:"p2",emotion:"기쁨 Joy",kind:"취미",year:"상시",ratio:"4 / 5",title:"3점 하나에 하루가 감",
+  story:"슛이 들어간 날은 하루 종일 기분이 좋고, 안 들어간 날은 그냥 더 던집니다. 체육관 문 닫을 때까지 남아 있는 사람이 보통 저예요.",
+  facts:[{k:"포지션",v:"가드"},{k:"주 특기",v:"3점 (가끔)"},{k:"퇴장 시각",v:"문 닫을 때"}],tags:["농구","코트","체력"],ph:"농구 코트 (4:5)"},
+ {id:"p3",emotion:"열정 Passion",kind:"취미",year:"2024–",ratio:"1 / 1",title:"테니스, 입문 중 진심",
+  story:"라켓을 산 지 얼마 안 됐는데 이미 그립을 두 번 갈았습니다. 폼은 아직 엉망이지만 공 맞는 소리가 좋아서 계속 나갑니다.",
+  facts:[{k:"구력",v:"초보 딱지 유지 중"},{k:"좋아하는 소리",v:"스윗스팟"},{k:"목표",v:"서브 넣기"}],tags:["테니스","코트","성장중"],ph:"테니스 라켓·공 (1:1)"},
+ {id:"p4",emotion:"충동 Impulse",kind:"취미",year:"연중무휴",ratio:"2 / 3",title:"일단 표부터 끊습니다",
+  story:"계획은 도착해서 세웁니다. 검색은 기차 안에서, 숙소는 저녁에. 덕분에 길을 자주 잃지만 남는 사진은 늘 그때 것들이에요.",
+  facts:[{k:"예약 시점",v:"출발 D-1"},{k:"계획 수립",v:"현지 도착 후"},{k:"필수품",v:"보조배터리"}],tags:["여행","즉흥","기차"],ph:"여행 스냅 (2:3)"},
+ {id:"p5",emotion:"감성 Sentiment",kind:"취미",year:"오래됨",ratio:"4 / 5",title:"밤 열한 시의 피아노",
+  story:"악보는 잘 못 봅니다. 대신 들은 걸 손으로 더듬어 찾는 편이에요. 새벽에 치면 층간소음이라 요즘은 건반을 아주 살살 누릅니다.",
+  facts:[{k:"주법",v:"귀로 카피"},{k:"시간대",v:"23:00 이후"},{k:"음량",v:"아주 작게"}],tags:["피아노","음악","밤"],ph:"건반 (4:5)"},
+ {id:"p6",emotion:"감성 Sentiment",kind:"취미",year:"오래됨",ratio:"3 / 4",title:"기타는 어디든 들고 감",
+  story:"MT, 바닷가, 친구 자취방. 결국 누군가는 노래를 시키고 저는 못 이기는 척 칩니다. 사실 그 순간을 기다리고 있었어요.",
+  facts:[{k:"장르",v:"아무거나"},{k:"레퍼토리",v:"열 곡쯤"},{k:"핑계",v:"못 이기는 척"}],tags:["기타","합주","불꽃놀이 대신"],ph:"기타 (3:4)"},
+ {id:"p7",emotion:"고요 Calm",kind:"성격",year:"기본값",ratio:"1 / 1",title:"기본 상태는 집돌이",
+  story:"약속 없는 주말엔 커튼을 치고 하루 종일 방에 있습니다. 밖에 나가는 건 큰 결심이지만, 나가면 왜인지 새벽까지 안 들어옵니다.",
+  facts:[{k:"기본 상태",v:"방 안"},{k:"기동 조건",v:"큰 결심"},{k:"귀가 시각",v:"미정"}],tags:["집","충전","모순"],ph:"방 안 풍경 (1:1)"},
+ {id:"p8",emotion:"기쁨 Joy",kind:"취미",year:"쭉",ratio:"4 / 5",title:"콘솔 앞에선 진지해짐",
+  story:"패드를 잡으면 말수가 줄어듭니다. 엔딩을 본 게임은 세이브를 지우지 않고 남겨 둬요. 언젠가 다시 그 세계로 돌아갈 것 같아서.",
+  facts:[{k:"플랫폼",v:"콘솔"},{k:"선호",v:"싱글 스토리"},{k:"세이브",v:"안 지움"}],tags:["게임","스토리","몰입"],ph:"콘솔·패드 (4:5)"},
+ {id:"p9",emotion:"호기심 Curiosity",kind:"취미",year:"상시",ratio:"2 / 3",title:"전시는 혼자 보러 갑니다",
+  story:"같이 가면 눈치가 보여서 혼자 갑니다. 한 작품 앞에서 십 분씩 서 있어도 아무도 재촉하지 않는 게 좋아요.",
+  facts:[{k:"동행",v:"없음 권장"},{k:"체류",v:"작품당 10분"},{k:"기념품",v:"엽서 한 장"}],tags:["전시","예술","혼자"],ph:"전시장 (2:3)"},
+ {id:"p10",emotion:"호기심 Curiosity",kind:"성격",year:"만성",ratio:"3 / 4",title:"새로운 건 일단 해봄",
+  story:"처음 보는 건 일단 손대 봅니다. 그래서 반쯤 배운 게 많고, 그중 몇 개는 어쩌다 오래 남았어요. 이 사이트도 그중 하나입니다.",
+  facts:[{k:"시도",v:"많음"},{k:"완주",v:"가끔"},{k:"후회",v:"별로 없음"}],tags:["탐구","시작","취미부자"],ph:"작업 책상 (3:4)"},
+ {id:"p11",emotion:"충동 Impulse",kind:"취미",year:"2025",ratio:"4 / 5",title:"새벽 두 시의 드라이브",
+  story:"잠이 안 오면 나갑니다. 목적지는 보통 편의점이고, 돌아오는 길에 듣는 노래 때문에 그 밤은 특별해집니다.",
+  facts:[{k:"출발",v:"02:00"},{k:"목적지",v:"편의점"},{k:"핵심",v:"돌아오는 길 플레이리스트"}],tags:["밤","음악","산책"],ph:"밤 도로 (4:5)"},
+ {id:"p12",emotion:"고요 Calm",kind:"이력",year:"2024–",ratio:"1 / 1",title:"관광학과, 남의 여행도 설계함",
+  story:"전공이 여행입니다. 답사를 가면 남들보다 표지판과 동선을 오래 봅니다. 즐기는 법을 배우는 학과라고 소개하면 다들 부러워해요.",
+  facts:[{k:"학교",v:"강원대학교"},{k:"전공",v:"관광학"},{k:"특기",v:"동선 짜기"}],tags:["전공","답사","기획"],ph:"답사 현장 (1:1)"}
+];
+const NOW=[
+  {label:"듣는 중",title:"연습실에서 녹음한 기타 데모",note:"완성될 기미는 없지만 매주 조금씩 길어지고 있습니다."},
+  {label:"읽는 중",title:"여행 에세이 한 권, 전공 서적 한 권",note:"에세이는 빨리 읽히고 전공 책은 시험 기간에 갑자기 잘 읽힙니다."},
+  {label:"하는 중",title:"테니스 서브 교정",note:"영상 보고 따라 하는 중. 아직은 하늘로 갑니다."},
+  {label:"보는 중",title:"엔딩 안 본 콘솔 게임 두 개",note:"둘 다 후반부에서 멈춰 있습니다. 아껴 두는 거예요."},
+  {label:"가고 싶은",title:"이번 학기 끝나고 아무 데나",note:"표는 끝나기 전날 끊을 예정입니다."}
+];
+
+/* ── 앱 목록 ─────────────────────────────────────────── */
+const APPS=[
+  {id:"about",   title:"소개.txt",    glyph:"☺", w:620,h:600, desc:"누구인지, 뭘 공부하는지, 뭘 좋아하는지."},
+  {id:"pins",    title:"핀보드.dir",  glyph:"▦", w:780,h:680, desc:"감정별로 거를 수 있는 12개의 핀. 눌러서 자세히."},
+  {id:"now",     title:"요즘.now",    glyph:"◷", w:560,h:560, desc:"이번 달에 듣고, 읽고, 하는 것."},
+  {id:"contact", title:"연락.eml",    glyph:"✉", w:540,h:660, desc:"자동응답기. 이메일·인스타·오픈채팅·메시지."},
+  {id:"hoops",   title:"3점슛.app",   glyph:"◎", w:480,h:520, desc:"타이밍 맞춰 던지는 미니 게임. 10구 도전."},
+  {id:"settings",title:"설정",        glyph:"⚙", w:560,h:560, desc:"배경 색과 낮/밤 모드 바꾸기."},
+  {id:"guide",   title:"안내서.help", glyph:"?", w:520,h:600, desc:"이 화면."}
+];
+const APP = Object.fromEntries(APPS.map(a=>[a.id,a]));
+
+/* ── 유틸 ────────────────────────────────────────────── */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store={get(k,d){try{const v=localStorage.getItem("yuhaos:"+k);return v===null?d:v}catch(e){return d}},
+             set(k,v){try{localStorage.setItem("yuhaos:"+k,v)}catch(e){}}};
+const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const isMobile=()=>innerWidth<=760;
+
+/* ── 테마 ───────────────────────────────────────────── */
+function applyTheme(){
+  const root=document.documentElement;
+  root.dataset.theme=store.get("theme","light");
+  root.dataset.wall=store.get("wall","cream");
+}
+applyTheme();
+
+/* ── 부팅 ───────────────────────────────────────────── */
+const boot=$("#boot"), desktop=$("#desktop");
+const BOOT_LINES=[
+  ["본부 전원 켜는 중…",""],
+  ["기쁨 출근","ok"],["열정 출근","ok"],["호기심 출근","ok"],
+  ["고요 출근 (조금 늦음)","ok"],["충동 이미 퇴근했다가 복귀","ok"],["감성 출근","ok"],
+  ["직원 6명 확인. 콘솔 준비 완료.",""]
+];
+let bootTimers=[];
+function runBoot(){
+  const log=$("#bootLog"); log.innerHTML="";
+  bootTimers.forEach(clearTimeout); bootTimers=[];
+  BOOT_LINES.forEach(([t,c],i)=>{
+    const add=()=>{const s=document.createElement("span");s.className=c;s.textContent=(c?"[ OK ] ":"› ")+t;log.appendChild(s)};
+    reduced?add():bootTimers.push(setTimeout(add,180*i));
+  });
+}
+function enter(first="about"){
+  if(boot.hidden) return;
+  bootTimers.forEach(clearTimeout);
+  boot.hidden=true; desktop.hidden=false;
+  if(!$("#windows").children.length) openApp(first);
+}
+boot.addEventListener("click",()=>enter());
+boot.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();enter()}});
+$("#powerOff").addEventListener("click",()=>{
+  $$("#windows .win").forEach(w=>closeApp(w.dataset.app));
+  desktop.hidden=true; boot.hidden=false; runBoot(); boot.focus();
+});
+runBoot();
+/* 주소 뒤 #앱이름 (예: index.html#pins) 이면 부팅 건너뛰고 바로 그 창 */
+addEventListener("DOMContentLoaded",()=>{
+  const h=location.hash.slice(1);
+  if(APP[h]) enter(h);
+});
+
+/* ── 시계 ───────────────────────────────────────────── */
+function tick(){const d=new Date();$("#clock").textContent=d.toLocaleDateString("ko-KR",{month:"short",day:"numeric",weekday:"short"})+" "+d.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})}
+tick(); setInterval(tick,20000);
+
+/* ── 아이콘 · 독 ────────────────────────────────────── */
+$("#icons").innerHTML=APPS.map(a=>`<button class="icon" data-open="${a.id}"><span class="glyph" aria-hidden="true">${a.glyph}</span><span class="name">${a.title}</span></button>`).join("");
+function renderDock(){
+  const open=new Set($$("#windows .win").map(w=>w.dataset.app));
+  $("#dock").innerHTML=APPS.map((a,i)=>(i===4?'<span class="sep"></span>':"")+
+    `<button data-open="${a.id}" class="${open.has(a.id)?"open":""}" title="${a.title}" aria-label="${a.title}${open.has(a.id)?" (열림)":""}">${a.glyph}</button>`).join("");
+}
+renderDock();
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-open]"); if(!t) return;
+  e.preventDefault(); openApp(t.dataset.open);
+});
+
+/* ── 창 관리 ─────────────────────────────────────────── */
+let zTop=100, cascade=0;
+function focusWin(win){
+  win.style.zIndex=++zTop;
+  $$("#windows .win").forEach(w=>w.classList.toggle("focused",w===win));
+}
+function openApp(id){
+  const app=APP[id]; if(!app) return;
+  let win=$(`#windows .win[data-app="${id}"]`);
+  if(win){focusWin(win); win.querySelector(".x").focus(); return}
+  win=document.createElement("section");
+  win.className="win"+(reduced?"":" enter"); win.dataset.app=id;
+  win.setAttribute("role","dialog"); win.setAttribute("aria-label",app.title);
+  win.innerHTML=`<div class="titlebar"><span class="t">${app.title}</span><span class="stripes" aria-hidden="true"></span>
+    <button class="x" aria-label="${app.title} 닫기">×</button></div>
+    <div class="win-body"></div><div class="statusbar"><span>YUHA OS</span><span data-status>준비됨</span></div>`;
+  win.querySelector(".win-body").appendChild($("#tpl-"+id).content.cloneNode(true));
+  // 크기·위치: 화면 안에 들어오게, 여러 개면 계단식
+  const W=Math.min(app.w,innerWidth-160), H=Math.min(app.h,innerHeight-130);
+  const off=(cascade++%6)*28;
+  win.style.width=W+"px"; win.style.height=H+"px";
+  win.style.left=Math.max(130,Math.min((innerWidth-W)/2-80+off,innerWidth-W-16))+"px";
+  win.style.top=Math.max(44,Math.min(60+off,innerHeight-H-80))+"px";
+  $("#windows").appendChild(win);
+  win.addEventListener("pointerdown",()=>focusWin(win));
+  win.querySelector(".x").addEventListener("click",()=>closeApp(id));
+  makeDraggable(win);
+  INIT[id]?.(win);
+  focusWin(win); renderDock();
+  win.querySelector(".x").focus();
+}
+function closeApp(id){
+  const win=$(`#windows .win[data-app="${id}"]`); if(!win) return;
+  win._cleanup?.(); win.remove(); renderDock();
+  const rest=$$("#windows .win").sort((a,b)=>b.style.zIndex-a.style.zIndex);
+  if(rest[0]){focusWin(rest[0]); rest[0].querySelector(".x").focus()}
+}
+function makeDraggable(win){
+  const bar=win.querySelector(".titlebar");
+  bar.addEventListener("pointerdown",e=>{
+    if(isMobile()||e.target.closest("button")) return;
+    const sx=e.clientX, sy=e.clientY, l=win.offsetLeft, t=win.offsetTop;
+    bar.setPointerCapture(e.pointerId);
+    const move=ev=>{
+      win.style.left=Math.max(-win.offsetWidth+80,Math.min(innerWidth-80,l+ev.clientX-sx))+"px";
+      win.style.top=Math.max(32,Math.min(innerHeight-60,t+ev.clientY-sy))+"px";
+    };
+    const up=()=>{bar.removeEventListener("pointermove",move);bar.removeEventListener("pointerup",up)};
+    bar.addEventListener("pointermove",move); bar.addEventListener("pointerup",up);
+  });
+}
+document.addEventListener("keydown",e=>{
+  if(desktop.hidden) return;
+  if(e.key==="Escape"){
+    const top=$$("#windows .win").sort((a,b)=>b.style.zIndex-a.style.zIndex)[0];
+    if(top){e.preventDefault(); closeApp(top.dataset.app)}
+  }
+});
+
+/* ── 앱별 초기화 ─────────────────────────────────────── */
+const tileHTML=(p,big)=>{
+  const e=EMO[p.emotion], src=PIN_PHOTOS[p.id];
+  return `<div class="tile" style="--c:${e.c};aspect-ratio:${p.ratio}">
+    ${src?`<img src="${esc(src)}" alt="${esc(p.title)}" loading="lazy">`:`<span class="ph">${esc(p.ph)}</span>`}
+    ${big?"":`<span class="badge" style="--c:${e.c}"><i></i>${esc(p.emotion)}</span>`}</div>`;
+};
+const INIT={
+  about(win){
+    $("#staff",win).innerHTML=Object.entries(EMO).map(([k,v])=>`<span class="badge" style="--c:${v.c}"><i></i>${esc(k)}</span>`).join("");
+    if(PROFILE_PHOTO) $("#profilePhoto",win).innerHTML=`<img src="${esc(PROFILE_PHOTO)}" alt="유하 프로필 사진">`;
+    win.querySelector("[data-status]").textContent="직원 6명 근무 중";
+  },
+  pins(win){
+    const list=$("[data-view=list]",win), detail=$("[data-view=detail]",win), body=win.querySelector(".win-body");
+    const status=win.querySelector("[data-status]");
+    $("[data-count]",win).textContent=PINS.length;
+    let filter="전체 All";
+    const chips=$(".chips",win), board=$(".board",win);
+    function draw(){
+      const order=["전체 All",...Object.keys(EMO)];
+      chips.innerHTML=order.map(l=>`<button class="chip" aria-pressed="${l===filter}" data-f="${esc(l)}">${EMO[l]?`<i style="background:${EMO[l].c}"></i>`:""}${esc(l)}</button>`).join("");
+      const items=filter==="전체 All"?PINS:PINS.filter(p=>p.emotion===filter);
+      board.innerHTML=items.map(p=>`<button class="pin" data-pin="${p.id}">${tileHTML(p)}
+        <div class="pin-meta"><div class="pin-title">${esc(p.title)}</div><div class="pin-kind">${esc(p.kind)} · ${esc(p.year)}</div></div></button>`).join("");
+      status.textContent=`${items.length}개 표시`;
+    }
+    chips.addEventListener("click",e=>{const b=e.target.closest("[data-f]"); if(b){filter=b.dataset.f; draw()}});
+    board.addEventListener("click",e=>{const b=e.target.closest("[data-pin]"); if(b) show(b.dataset.pin)});
+    function show(id){
+      const p=PINS.find(x=>x.id===id), em=EMO[p.emotion];
+      detail.innerHTML=`<button class="btn" data-back>← 핀보드</button>
+        ${tileHTML(p,true)}
+        <span class="badge" style="--c:${em.c}"><i></i>${esc(p.emotion)} · ${esc(p.kind)} · ${esc(p.year)}</span>
+        <h2 class="serif">${esc(p.title)}</h2>
+        <p style="margin-top:10px">${esc(p.story)}</p>
+        <dl class="facts">${p.facts.map(f=>`<div><dt>${esc(f.k)}</dt><dd>${esc(f.v)}</dd></div>`).join("")}</dl>
+        <div class="tags">${p.tags.map(t=>`<span>#${esc(t)}</span>`).join("")}</div>
+        <p class="driver" style="--c:${em.c}"><b>${em.g} 운전대 기록</b> — ${esc(em.line)}</p>`;
+      list.hidden=true; detail.hidden=false; body.scrollTop=0;
+      status.textContent=p.id.toUpperCase();
+      $("[data-back]",detail).focus();
+      $("[data-back]",detail).addEventListener("click",()=>{detail.hidden=true; list.hidden=false;
+        draw(); $(`[data-pin="${id}"]`,board)?.focus()});
+    }
+    draw();
+  },
+  now(win){
+    $("[data-now]",win).innerHTML=NOW.map(r=>`<div class="now-row"><div class="k">${esc(r.label)}</div>
+      <div><div class="v">${esc(r.title)}</div><div class="n">${esc(r.note)}</div></div></div>`).join("");
+    win.querySelector("[data-status]").textContent="다음 달엔 다 바뀜";
+  },
+  contact(win){
+    const opts=[
+      {k:"1",label:"이메일",val:CONTACT.email,href:CONTACT.email?"mailto:"+CONTACT.email:""},
+      {k:"2",label:"인스타그램",val:CONTACT.instagram?"DM 보내기":"준비 중",href:CONTACT.instagram},
+      {k:"3",label:"오픈채팅",val:CONTACT.openchat?"채팅방 열기":"준비 중",href:CONTACT.openchat},
+      {k:"4",label:"메시지 남기기",val:"녹음 시작",href:"#leave"}
+    ];
+    $("[data-opts]",win).innerHTML=opts.map(o=>{
+      const ext=o.href&&o.href.startsWith("http");
+      return o.href
+        ? `<a class="btn" data-key="${o.k}" href="${esc(o.href)}"${ext?' target="_blank" rel="noopener"':""}><span><kbd>${o.k}</kbd> ${o.label}</span><span>${esc(o.val)}${ext?" ↗":""}</span></a>`
+        : `<span class="btn" data-key="${o.k}" aria-disabled="true"><span><kbd>${o.k}</kbd> ${o.label}</span><span>${esc(o.val)}</span></span>`;
+    }).join("");
+    const menu=$("[data-screen=menu]",win), leave=$("[data-screen=leave]",win), form=$("[data-form]",win), err=$("[data-err]",win);
+    const status=win.querySelector("[data-status]");
+    const toLeave=()=>{menu.hidden=true; leave.hidden=false; form.hidden=false; status.textContent="녹음 중…"; form.name.focus()};
+    const toMenu=()=>{menu.hidden=false; leave.hidden=true; form.hidden=true; err.textContent=""; status.textContent="대기 중"};
+    $('[data-key="4"]',win).addEventListener("click",e=>{e.preventDefault(); toLeave()});
+    $("[data-back]",form).addEventListener("click",toMenu);
+    form.addEventListener("submit",e=>{
+      e.preventDefault();
+      const n=form.name.value.trim(), m=form.email.value.trim(), t=form.msg.value.trim();
+      if(!n||!m||!t){err.textContent="✗ 이름, 이메일, 메시지를 모두 채워 주세요."; return}
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)){err.textContent="✗ 이메일 형식을 확인해 주세요."; return}
+      err.textContent="";
+      location.href=`mailto:${CONTACT.email}?subject=${encodeURIComponent("[YUHA OS] "+n+" 님의 메시지")}&body=${encodeURIComponent(t+"\n\n— "+n+" ("+m+")")}`;
+      status.textContent="메일 앱으로 넘김";
+    });
+    const onKey=e=>{
+      if(!menu.hidden && Number(win.style.zIndex)===zTop && ["1","2","3","4"].includes(e.key) && !e.target.closest("input,textarea")){
+        const el=$(`[data-key="${e.key}"]`,win); if(el.tagName==="A"){e.preventDefault(); el.click()}
+      }
+    };
+    document.addEventListener("keydown",onKey);
+    win._cleanup=()=>document.removeEventListener("keydown",onKey);
+    status.textContent="대기 중";
+  },
+  hoops(win){
+    const needle=$("[data-needle]",win), zone=$("[data-zone]",win), msg=$("[data-msg]",win), btn=$("[data-shoot]",win);
+    const mEl=$("[data-made]",win), sEl=$("[data-shots]",win), bEl=$("[data-best]",win);
+    let best=+store.get("best",0), made=0, shots=0, streak=0, pos=0, dir=1, running=false, raf=0, last=0, center=.5, width=.24;
+    bEl.textContent=best;
+    const HIT=["스윗! 들어갔다.","림도 안 건드림. 깔끔.","오늘 하루가 감.","3점! 코트가 조용해짐."];
+    const MISS=["림 맞고 나옴.","에어볼… 못 본 걸로.","그냥 더 던지면 됩니다.","아깝다. 한 번 더."];
+    function layout(){zone.style.left=(center-width/2)*100+"%"; zone.style.width=width*100+"%"}
+    function newZone(){width=Math.max(.08,.24-streak*.03); center=width/2+Math.random()*(1-width); layout()}
+    function frame(t){
+      const dt=last?Math.min(40,t-last):16; last=t;
+      const speed=(.0009+shots*.00008);
+      pos+=dir*speed*dt; if(pos>=1){pos=1;dir=-1} if(pos<=0){pos=0;dir=1}
+      needle.style.left=pos*100+"%";
+      raf=requestAnimationFrame(frame);
+    }
+    function start(){made=shots=streak=0; update(); newZone(); running=true; last=0; btn.textContent="▸ 슛!"; msg.textContent="바늘이 초록 칸에 올 때!"; cancelAnimationFrame(raf); raf=requestAnimationFrame(frame)}
+    function update(){mEl.textContent=made; sEl.textContent=shots+"/10"}
+    function shoot(){
+      if(!running){start(); return}
+      shots++;
+      const hit=Math.abs(pos-center)<=width/2;
+      if(hit){made++; streak++; msg.textContent=HIT[Math.floor(Math.random()*HIT.length)]}
+      else{streak=0; msg.textContent=MISS[Math.floor(Math.random()*MISS.length)]}
+      update();
+      if(shots>=10){
+        running=false; cancelAnimationFrame(raf);
+        if(made>best){best=made; store.set("best",best); bEl.textContent=best}
+        msg.textContent=made>=7?`${made}/10 — 체육관 문 닫을 때까지 남는 사람.`:made>=4?`${made}/10 — 오늘은 그냥 더 던지는 날.`:`${made}/10 — 안 들어간 날은 더 던집니다.`;
+        btn.textContent="▸ 다시 하기";
+      } else newZone();
+      win.querySelector("[data-status]").textContent=`연속 ${streak}`;
+    }
+    btn.addEventListener("click",shoot);
+    const onKey=e=>{if(e.code==="Space"&&Number(win.style.zIndex)===zTop&&!e.target.closest("input,textarea,a")){e.preventDefault(); if(e.target!==btn) shoot()}};
+    document.addEventListener("keydown",onKey);
+    win._cleanup=()=>{cancelAnimationFrame(raf); document.removeEventListener("keydown",onKey)};
+    layout();
+  },
+  settings(win){
+    const WALLS=[
+      {id:"cream",label:"크림 기본",ds:"본부 기본 조명",sw:"#f3e7cf,#d9c094"},
+      {id:"joy",label:"기쁨 옐로",ds:"3점 들어간 날",sw:"#fbe7a8,#e9bf45"},
+      {id:"calm",label:"고요 그린",ds:"커튼 친 주말",sw:"#dfe9d8,#a7c19a"},
+      {id:"curiosity",label:"호기심 블루",ds:"처음 가는 동네",sw:"#dde6f3,#9fb6d8"}
+    ];
+    const wrap=$("[data-walls]",win);
+    function draw(){
+      const cur=store.get("wall","cream"), th=store.get("theme","light");
+      wrap.innerHTML=WALLS.map(w=>`<button class="wall" data-wall="${w.id}" aria-pressed="${w.id===cur}">
+        <div class="sw" style="background:radial-gradient(ellipse at center,${w.sw})"></div>
+        <div class="lb">${w.label}<span class="ds">${w.ds}</span></div></button>`).join("");
+      $$("[data-theme-btn]",win).forEach(b=>b.setAttribute("aria-pressed",b.dataset.themeBtn===th));
+    }
+    wrap.addEventListener("click",e=>{const b=e.target.closest("[data-wall]"); if(b){store.set("wall",b.dataset.wall); applyTheme(); draw(); wrap.querySelector(`[data-wall="${b.dataset.wall}"]`).focus()}});
+    $$("[data-theme-btn]",win).forEach(b=>b.addEventListener("click",()=>{store.set("theme",b.dataset.themeBtn); applyTheme(); draw()}));
+    draw();
+  },
+  guide(win){
+    $("[data-guide]",win).innerHTML=APPS.filter(a=>a.id!=="guide").map(a=>
+      `<li><span class="glyph" aria-hidden="true">${a.glyph}</span><div><b><a href="#" data-open="${a.id}">${a.title}</a></b><span>${a.desc}</span></div></li>`).join("");
+  }
+};
+</script>
+</body>
+</html>
